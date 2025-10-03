@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useRef } from "react";
 import { Container, Row, Col, Form, Button, Card } from "react-bootstrap";
 
 function App() {
@@ -7,26 +7,45 @@ function App() {
   const eventSourceRef = useRef(null);
 
   const startChat = () => {
-    setMessages([]); // clear previous messages
+    if (!prompt.trim()) return;
 
-    // Close any existing connection
-    if (eventSourceRef.current) {
-      eventSourceRef.current.close();
-    }
+    // Add user message
+    setMessages((prev) => [...prev, { user: "user", message: prompt }]);
 
-    // Connect to FastAPI SSE endpoint
+    // Close any existing SSE connection
+    if (eventSourceRef.current) eventSourceRef.current.close();
+
+    // Connect to backend SSE
     eventSourceRef.current = new EventSource(
       `http://127.0.0.1:8000/chat?prompt=${encodeURIComponent(prompt)}`
     );
 
+    // Stream bot message
     eventSourceRef.current.onmessage = (event) => {
-      setMessages((prev) => [...prev, event.data]);
+      try {
+        const msg = JSON.parse(event.data);
+
+        setMessages((prev) => {
+          // Check if last message is from bot
+          if (prev.length && prev[prev.length - 1].user === "bot") {
+            // Replace last bot message with updated text
+            return [...prev.slice(0, -1), msg];
+          } else {
+            // Add new bot message
+            return [...prev, msg];
+          }
+        });
+      } catch (err) {
+        console.error("Failed to parse message:", err);
+      }
     };
 
-    eventSourceRef.current.onerror = (err) => {
-      console.error("EventSource failed:", err);
+    eventSourceRef.current.onerror = () => {
       eventSourceRef.current.close();
     };
+
+    // Clear input
+    setPrompt("");
   };
 
   return (
@@ -55,9 +74,18 @@ function App() {
                 </Button>
               </Form>
               <hr />
-              <div style={{ minHeight: "150px" }}>
+              <div
+                style={{
+                  minHeight: "150px",
+                  maxHeight: "300px",
+                  overflowY: "auto",
+                  whiteSpace: "pre-wrap",
+                }}
+              >
                 {messages.map((msg, idx) => (
-                  <div key={idx}>{msg}</div>
+                  <div key={idx}>
+                    <strong>{msg.user}:</strong> {msg.message}
+                  </div>
                 ))}
               </div>
             </Card.Body>
