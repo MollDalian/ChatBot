@@ -7,17 +7,24 @@ import MessageInput from "./MessageInput";
 function App() {
   const [messages, setMessages] = useState([]);
   const [currentChatId, setCurrentChatId] = useState(null);
-  const [allChats, setAllChats] = useState([]); // list of chats for sidebar
+  const [allChats, setAllChats] = useState([]);
+  const [isNewChat, setIsNewChat] = useState(false); // for focusing input
   const eventSourceRef = useRef(null);
   const inputRef = useRef(null);
 
-  // Focus input and load existing chats
+  // Focus input after new chat starts
   useEffect(() => {
-    inputRef.current?.focus();
+    if (isNewChat) {
+      inputRef.current?.focus();
+      setIsNewChat(false);
+    }
+  }, [isNewChat]);
+
+  // Load existing chats on mount
+  useEffect(() => {
     fetchChats();
   }, []);
 
-  // Load all chats from backend
   const fetchChats = async () => {
     try {
       const res = await fetch("http://127.0.0.1:8000/chats");
@@ -28,11 +35,10 @@ function App() {
     }
   };
 
-  // Send user message and stream bot response
   const sendMessage = async (prompt) => {
     if (!prompt.trim()) return;
 
-    // Append user message, preserve any existing messages (like welcome)
+    // Append user message to preserve welcome or previous messages
     setMessages((prev) => [...prev, { user: "user", message: prompt }]);
 
     if (eventSourceRef.current) eventSourceRef.current.close();
@@ -45,7 +51,7 @@ function App() {
       try {
         const msg = JSON.parse(event.data);
 
-        // Only add new chat to sidebar once
+        // Only add the chat once to sidebar
         if (!currentChatId && msg.chat_id) {
           setCurrentChatId(msg.chat_id);
 
@@ -57,7 +63,7 @@ function App() {
           });
         }
 
-        // Append bot message word-by-word
+        // Append bot message word by word
         setMessages((prev) => {
           if (prev.length && prev[prev.length - 1].user === "bot") {
             return [...prev.slice(0, -1), msg];
@@ -75,7 +81,6 @@ function App() {
     };
   };
 
-  // Load chat from sidebar
   const loadChat = async (chatId) => {
     try {
       const res = await fetch(`http://127.0.0.1:8000/load_chat/${chatId}`);
@@ -87,11 +92,10 @@ function App() {
     }
   };
 
-  // Start a new chat with welcome message
   const startNewChat = () => {
     setMessages([{ user: "bot", message: "Hello! How can I help you today?" }]);
     setCurrentChatId(null);
-    inputRef.current?.focus();
+    setIsNewChat(true); // trigger input focus
   };
 
   return (

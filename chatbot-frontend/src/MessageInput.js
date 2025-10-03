@@ -1,31 +1,30 @@
-import React, { useState } from "react";
-import { Form, Button } from "react-bootstrap";
+import React, { forwardRef, useState } from "react";
 
-function MessageInput({ onSend, disabled }) {
-  const [prompt, setPrompt] = useState("");
+const MessageInput = forwardRef(({ onSend }, ref) => {
+  const [value, setValue] = useState("");
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    onSend(prompt);
-    setPrompt("");
+  const handleSend = () => {
+    if (value.trim()) {
+      onSend(value);
+      setValue("");
+    }
+  };
+
+  const handleKeyPress = (e) => {
+    if (e.key === "Enter") handleSend();
   };
 
   return (
-    <Form onSubmit={handleSubmit}>
-      <Form.Group className="mb-3">
-        <Form.Control
-          type="text"
-          placeholder="Type your message..."
-          value={prompt}
-          onChange={(e) => setPrompt(e.target.value)}
-          disabled={disabled}
-        />
-      </Form.Group>
-      <Button type="submit" className="w-100" disabled={disabled}>
-        Send
-      </Button>
-    </Form>
+    <input
+      type="text"
+      ref={ref} // this makes App.js inputRef.current.focus() work
+      value={value}
+      onChange={(e) => setValue(e.target.value)}
+      onKeyPress={handleKeyPress}
+      className="form-control mt-2"
+      placeholder="Type your message..."
+    />
   );
-}
+});
 
 export default MessageInput;
