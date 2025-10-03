@@ -1,7 +1,8 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
-from models.chat import ChatMessage
+from models.chat import ChatMessage, Chat
 from datetime import datetime
+from data import chats
 import asyncio
 
 router = APIRouter()
@@ -20,3 +21,15 @@ async def fake_chatbot_response(prompt: str):
 @router.get("/chat")
 async def chat(prompt: str):
     return StreamingResponse(fake_chatbot_response(prompt), media_type="text/event-stream")
+
+@router.get("/load_chat/{chat_id}", response_model=Chat)
+async def load_chat(chat_id: str):
+    if chat_id in chats:
+        return chats[chat_id]
+    else:
+        raise HTTPException(status_code=404, detail="Chat not found")
+
+@router.get("/chats")
+async def list_chats():
+    return [{"chat_id": c.chat_id, "title": c.title} for c in chats.values()]
+
