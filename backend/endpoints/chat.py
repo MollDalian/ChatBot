@@ -1,8 +1,9 @@
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
 from models.chat import ChatMessage, Chat
+from models.db import chats, messages
+from db import database
 from datetime import datetime
-from data import chats
 import asyncio
 
 router = APIRouter()
@@ -31,5 +32,9 @@ async def load_chat(chat_id: str):
 
 @router.get("/chats")
 async def list_chats():
-    return [{"chat_id": c.chat_id, "title": c.title} for c in chats.values()]
+    query = chats.select()
+    result = await database.fetch_all(query)
+    henk = [{"chat_id": row["id"], "title": row["title"]} for row in result]
+
+    return henk
 

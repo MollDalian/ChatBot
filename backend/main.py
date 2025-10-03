@@ -1,11 +1,20 @@
-# backend/main.py
 from fastapi import FastAPI
+from contextlib import asynccontextmanager
+from db import database
 from fastapi.middleware.cors import CORSMiddleware
 from endpoints.chat import router as chat_router
 
-app = FastAPI()
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup code
+    await database.connect()
+    yield
+    # Shutdown code
+    await database.disconnect()
 
-# Enable CORS
+app = FastAPI(lifespan=lifespan)
+
+# CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:3000"],
@@ -14,5 +23,5 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Include chat endpoint
+# Include routes
 app.include_router(chat_router)
