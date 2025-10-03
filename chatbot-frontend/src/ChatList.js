@@ -1,36 +1,23 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 
-function ChatList({ onSelectChat }) {
-  const [chats, setChats] = useState([]);
-
-  useEffect(() => {
-    const fetchChats = async () => {
-      try {
-        const res = await fetch("http://127.0.0.1:8000/chats");
-        const data = await res.json();
-        setChats(data);
-      } catch (err) {
-        console.error("Failed to fetch chats:", err);
-      }
-    };
-    fetchChats();
-  }, []);
-
+function ChatList({ chats, onSelectChat }) {
   return (
     <div>
-      <h5>Available Chats</h5>
-      <ul className="list-group">
-        {chats.map((chat) => (
-          <li
-            key={chat.chat_id}
-            className="list-group-item list-group-item-action"
-            style={{ cursor: "pointer" }}
-            onClick={() => onSelectChat(chat.chat_id)}
-          >
-            {chat.title}
-          </li>
-        ))}
-      </ul>
+      {chats.length === 0 && <div>No chats yet</div>}
+      {chats.map((chat) => (
+        <div
+          key={chat.chat_id}
+          className="chat-item"
+          style={{
+            padding: "8px",
+            borderBottom: "1px solid #ccc",
+            cursor: "pointer",
+          }}
+          onClick={() => onSelectChat(chat.chat_id)}
+        >
+          {chat.title}
+        </div>
+      ))}
     </div>
   );
 }
