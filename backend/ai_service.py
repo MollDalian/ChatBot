@@ -107,7 +107,7 @@ class AIService:
             input_ids = self.fallback_tokenizer.encode(
                 conversation,
                 return_tensors="pt",
-                truncate=True,
+                truncation=True,
                 max_length=1000
             )
             
