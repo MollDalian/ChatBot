@@ -49,7 +49,7 @@ This is a full-stack AI chatbot application with a React frontend and FastAPI ba
 ## Architecture
 
 ### Backend API (Port 8000)
-The backend runs on `localhost:8000` and provides the following endpoints:
+The backend runs on `0.0.0.0:8000` and provides the following endpoints:
 - `GET /chat?prompt={text}&chat_id={id}` - Send a message and get streaming response
 - `GET /chats` - List all chat sessions
 - `GET /load_chat/{chat_id}` - Load a specific chat with its message history
@@ -66,11 +66,14 @@ The React frontend runs on `0.0.0.0:5000` and provides:
 ## Recent Changes (2025-10-04)
 - Configured the application for Replit environment
 - Updated CORS settings to allow all origins for Replit's proxy
-- Modified frontend to use environment variables for backend URL
+- Modified frontend to use relative URLs for API calls through React proxy
 - Configured React to bind to 0.0.0.0:5000 with host check disabled
+- Changed backend to listen on 0.0.0.0:8000 for better proxy compatibility
 - Set up combined workflow to run both backend and frontend
 - Configured deployment settings for VM deployment
 - Added comprehensive .gitignore file
+- Created setupProxy.js to handle Server-Sent Events streaming without buffering
+- Added pytest test suite with 10 comprehensive unit tests (all passing)
 
 ## Environment Variables
 
@@ -90,8 +93,10 @@ bash start.sh
 ```
 
 This script:
-1. Starts the FastAPI backend on localhost:8000
+1. Starts the FastAPI backend on 0.0.0.0:8000
 2. Starts the React frontend on 0.0.0.0:5000
+
+The frontend uses React's built-in proxy (configured in package.json) to forward API requests to the backend, with a custom setupProxy.js middleware to handle Server-Sent Events streaming without buffering.
 
 ### Manual Start
 To start services manually:
@@ -99,7 +104,7 @@ To start services manually:
 Backend:
 ```bash
 cd backend
-uvicorn main:app --host localhost --port 8000 --reload
+uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
 Frontend:

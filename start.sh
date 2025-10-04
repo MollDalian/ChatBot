@@ -10,7 +10,7 @@ cleanup() {
 trap cleanup SIGTERM SIGINT
 
 # Start backend
-cd /home/runner/workspace/backend && uvicorn main:app --host localhost --port 8000 --reload &
+cd /home/runner/workspace/backend && uvicorn main:app --host 0.0.0.0 --port 8000 --reload &
 BACKEND_PID=$!
 
 # Start frontend
