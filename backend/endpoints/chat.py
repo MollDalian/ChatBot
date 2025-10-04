@@ -5,6 +5,7 @@ from datetime import datetime
 import asyncio
 import uuid
 import torch
+from typing import Optional
 from transformers import AutoModelForCausalLM, AutoTokenizer, TextIteratorStreamer
 from models.chat import ChatMessage, Chat
 
@@ -40,7 +41,7 @@ if torch.cuda.is_available():
 # Streaming bot response endpoint
 # -----------------------------
 @router.get("/chat")
-async def chat(prompt: str, chat_id: str = Query(default=None)):
+async def chat(prompt: str, chat_id: Optional[str] = None):
     if not chat_id:
         chat_id = await create_chat(title=prompt[:20])
 
