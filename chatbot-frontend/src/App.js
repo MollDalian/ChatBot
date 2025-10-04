@@ -8,7 +8,7 @@ function App() {
   const [messages, setMessages] = useState([]);
   const [currentChatId, setCurrentChatId] = useState(null);
   const [allChats, setAllChats] = useState([]);
-  const [isNewChat, setIsNewChat] = useState(false); // for focusing input
+  const [isNewChat, setIsNewChat] = useState(false);
   const eventSourceRef = useRef(null);
   const inputRef = useRef(null);
 
@@ -20,9 +20,15 @@ function App() {
     }
   }, [isNewChat]);
 
-  // Load existing chats on mount
+  // Load existing chats and show welcome message on mount
   useEffect(() => {
-    fetchChats();
+    const initializeApp = async () => {
+      await fetchChats();
+      if (!currentChatId) {
+        setMessages([{ user: "bot", message: "Hello! How can I help you today?" }]);
+      }
+    };
+    initializeApp();
   }, []);
 
   const fetchChats = async () => {
@@ -36,37 +42,32 @@ function App() {
   };
 
   const handleDeleteChat = async (chatId) => {
-  try {
-    const response = await fetch(`http://127.0.0.1:8000/chat/${chatId}`, {
-      method: 'DELETE'
-    });
+    try {
+      const response = await fetch(`http://127.0.0.1:8000/chat/${chatId}`, {
+        method: 'DELETE'
+      });
 
-    if (response.ok) {
-      // Remove chat from local state using id instead of chat_id
-      setAllChats(prevChats => prevChats.filter(chat => chat.id !== chatId));
+      if (response.ok) {
+        setAllChats(prevChats => prevChats.filter(chat => chat.id !== chatId));
 
-      // Clear messages and reset current chat if the deleted chat was selected
-      if (currentChatId === chatId) {
-        setMessages([]);
-        setCurrentChatId(null);
-        startNewChat();
+        if (currentChatId === chatId) {
+          setMessages([]);
+          setCurrentChatId(null);
+          setMessages([{ user: "bot", message: "Hello! How can I help you today?" }]);
+        }
+
+        await fetchChats();
+      } else {
+        console.error('Failed to delete chat');
       }
-
-      // Refresh the chat list to ensure sync with backend
-      await fetchChats();
-    } else {
-      console.error('Failed to delete chat');
+    } catch (error) {
+      console.error('Error deleting chat:', error);
     }
-  } catch (error) {
-    console.error('Error deleting chat:', error);
-  }
-};
-
+  };
 
   const sendMessage = async (prompt) => {
     if (!prompt.trim()) return;
 
-    // Append user message to preserve welcome or previous messages
     setMessages((prev) => [...prev, { user: "user", message: prompt }]);
 
     if (eventSourceRef.current) eventSourceRef.current.close();
@@ -81,7 +82,6 @@ function App() {
       try {
         const msg = JSON.parse(event.data);
 
-        // Only add the chat once to sidebar
         if (!currentChatId && msg.chat_id) {
           setCurrentChatId(msg.chat_id);
 
@@ -93,7 +93,6 @@ function App() {
           });
         }
 
-        // Append bot message word by word
         setMessages((prev) => {
           if (prev.length && prev[prev.length - 1].user === "bot") {
             return [...prev.slice(0, -1), msg];
@@ -125,7 +124,7 @@ function App() {
   const startNewChat = () => {
     setMessages([{ user: "bot", message: "Hello! How can I help you today?" }]);
     setCurrentChatId(null);
-    setIsNewChat(true); // trigger input focus
+    setIsNewChat(true);
   };
 
   return (
