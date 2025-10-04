@@ -86,7 +86,20 @@ The React frontend runs on `0.0.0.0:5000` with a Merlin AI-inspired design featu
 
 ## Recent Changes (2025-10-04)
 
-### Latest Production Deployment & Branding (Current)
+### Latest Production & Mobile Fixes (Current)
+- **Production API Fix**:
+  - Fixed catch-all route intercepting API requests in production
+  - Added path exclusion for API routes (`chat`, `chats`, `load_chat`) from SPA fallback
+  - API endpoints now work correctly in production deployment
+  - Streaming responses verified and functional
+- **iPhone Mobile Layout Fix**:
+  - Fixed text input hidden below viewport on iPhone
+  - Implemented dynamic viewport height (`100dvh`) for iOS Safari compatibility
+  - Made main-content flex container with proper height constraints
+  - Input box now always visible without scrolling on mobile devices
+  - **Architect-approved** for production readiness
+
+### Previous Production Deployment & Branding
 - **Production Deployment Fix**:
   - Fixed proxy error in production by configuring FastAPI to serve React build files
   - Single-server architecture: FastAPI serves both API endpoints and static frontend
