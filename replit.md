@@ -96,7 +96,10 @@ This script:
 1. Starts the FastAPI backend on 0.0.0.0:8000
 2. Starts the React frontend on 0.0.0.0:5000
 
-The frontend uses React's built-in proxy (configured in package.json) to forward API requests to the backend, with a custom setupProxy.js middleware to handle Server-Sent Events streaming without buffering.
+The frontend uses a custom setupProxy.js with http-proxy-middleware to handle API requests without buffering Server-Sent Events. This middleware:
+- Routes `/chat`, `/chats`, and `/load_chat` requests to the backend
+- Sets `Cache-Control: no-cache` and `X-Accel-Buffering: no` headers
+- Preserves the full path when proxying (critical for proper routing)
 
 ### Manual Start
 To start services manually:
