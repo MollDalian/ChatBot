@@ -86,7 +86,21 @@ The React frontend runs on `0.0.0.0:5000` with a Merlin AI-inspired design featu
 
 ## Recent Changes (2025-10-04)
 
-### Latest Portfolio Enhancements
+### Latest Type Safety & Deployment Improvements
+- **Professional Type Hints**:
+  - Created new Pydantic models for type safety: `HistoryMessage`, `ChatSummary`, `ApiResponse`
+  - Replaced `Dict[str, str]` and `Any` return types with explicit Pydantic models
+  - Updated `get_chat_history()` to return `List[HistoryMessage]` instead of `List[Dict[str, str]]`
+  - Updated `list_chats()` to return `List[ChatSummary]` instead of `List[Dict[str, Any]]`
+  - Updated `delete_chat()` to return `ApiResponse` instead of `Dict[str, str]`
+  - Updated `stream()` generator to return `AsyncGenerator[bytes, None]` instead of `Any`
+  - Fixed `ChatMessage.chat_id` to use `Optional[str]` instead of `str = None`
+  - **Architect-approved** for portfolio-grade code quality
+- **Deployment Configuration**:
+  - Changed deployment target from CloudRun to **Autoscale** for optimal FastAPI + React hosting
+  - Optimized for ~$1/month cost-effective hosting on Replit
+
+### Previous Portfolio Enhancements
 - **Multi-Theme System**:
   - Implemented ThemeContext with three themes: Dark, Light, and Ocean
   - Theme dropdown selector in header showing all available themes
