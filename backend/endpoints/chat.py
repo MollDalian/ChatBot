@@ -4,6 +4,7 @@ from datetime import datetime
 import asyncio
 import uuid
 import torch
+import threading
 from typing import Optional
 from transformers import AutoModelForCausalLM, AutoTokenizer, TextIteratorStreamer
 from models.chat import ChatMessage, Chat
@@ -42,9 +43,25 @@ if torch.cuda.is_available():
 # Streaming bot response endpoint
 # -----------------------------
 @router.get("/chat")
+@router.get("/chat")
 async def chat(prompt: str, chat_id: Optional[str] = None):
     if not chat_id:
         chat_id = await create_chat(title=prompt[:20])
+
+    # Save user message to database
+    user_msg = ChatMessage(
+        user="user",
+        message=prompt,
+        timestamp=datetime.utcnow(),
+        chat_id=chat_id,
+    )
+    user_query = messages.insert().values(
+        user=user_msg.user,
+        message=user_msg.message,
+        timestamp=user_msg.timestamp,
+        chat_id=user_msg.chat_id
+    )
+    await database.execute(user_query)
 
     async def stream():
         input_ids = tokenizer(prompt, return_tensors="pt").input_ids
@@ -52,11 +69,8 @@ async def chat(prompt: str, chat_id: Optional[str] = None):
             input_ids = input_ids.to("cuda")
 
         message_text = ""
-
-        # Use TextIteratorStreamer for true streaming
         streamer = TextIteratorStreamer(tokenizer, skip_prompt=True, skip_special_tokens=True)
-        # Run generation in a separate thread to not block async loop
-        import threading
+
         thread = threading.Thread(
             target=model.generate,
             kwargs={
@@ -70,7 +84,6 @@ async def chat(prompt: str, chat_id: Optional[str] = None):
         )
         thread.start()
 
-        # Stream tokens as they are generated
         for token_text in streamer:
             message_text += token_text
             msg = ChatMessage(
@@ -79,10 +92,16 @@ async def chat(prompt: str, chat_id: Optional[str] = None):
                 timestamp=datetime.utcnow(),
                 chat_id=chat_id,
             )
-            # Save message in memory
-            messages_store[chat_id].append(msg.dict())
+            # Save bot message to database
+            bot_query = messages.insert().values(
+                user=msg.user,
+                message=msg.message,
+                timestamp=msg.timestamp,
+                chat_id=msg.chat_id
+            )
+            await database.execute(bot_query)
             yield f"data: {msg.json()}\n\n"
-            await asyncio.sleep(0.01)  # short sleep to keep streaming smooth
+            await asyncio.sleep(0.01)
 
         thread.join()
 
