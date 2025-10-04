@@ -43,69 +43,90 @@ if torch.cuda.is_available():
 # Streaming bot response endpoint
 # -----------------------------
 @router.get("/chat")
-@router.get("/chat")
 async def chat(prompt: str, chat_id: Optional[str] = None):
     if not chat_id:
         chat_id = await create_chat(title=prompt[:20])
 
-    # Save user message to database
+    # Save user message
     user_msg = ChatMessage(
         user="user",
         message=prompt,
         timestamp=datetime.utcnow(),
         chat_id=chat_id,
     )
-    user_query = messages.insert().values(
+    await database.execute(messages.insert().values(
         user=user_msg.user,
         message=user_msg.message,
         timestamp=user_msg.timestamp,
         chat_id=user_msg.chat_id
-    )
-    await database.execute(user_query)
+    ))
 
     async def stream():
-        input_ids = tokenizer(prompt, return_tensors="pt").input_ids
-        if torch.cuda.is_available():
-            input_ids = input_ids.to("cuda")
+        try:
+            formatted_prompt = f"Q: {prompt}\nA:"
+            input_ids = tokenizer(formatted_prompt, return_tensors="pt").input_ids
+            if torch.cuda.is_available():
+                input_ids = input_ids.to("cuda")
 
-        message_text = ""
-        streamer = TextIteratorStreamer(tokenizer, skip_prompt=True, skip_special_tokens=True)
+            message_text = ""
+            streamer = TextIteratorStreamer(tokenizer, skip_prompt=True, skip_special_tokens=True)
 
-        thread = threading.Thread(
-            target=model.generate,
-            kwargs={
-                "input_ids": input_ids,
-                "max_new_tokens": 500,
-                "do_sample": True,
-                "temperature": 0.7,
-                "pad_token_id": tokenizer.eos_token_id,
-                "streamer": streamer
-            }
-        )
-        thread.start()
+            thread = threading.Thread(
+                target=model.generate,
+                kwargs={
+                    "input_ids": input_ids,
+                    "max_new_tokens": 100,
+                    "do_sample": True,
+                    "temperature": 0.7,
+                    "top_p": 0.9,
+                    "pad_token_id": tokenizer.eos_token_id,
+                    "streamer": streamer,
+                    "num_return_sequences": 1,
+                }
+            )
+            thread.start()
 
-        for token_text in streamer:
-            message_text += token_text
-            msg = ChatMessage(
+            for token_text in streamer:
+                if token_text.strip():
+                    message_text += token_text
+                    msg = ChatMessage(
+                        user="bot",
+                        message=message_text.strip(),
+                        timestamp=datetime.utcnow(),
+                        chat_id=chat_id,
+                    )
+                    yield f"data: {msg.json()}\n\n".encode('utf-8')
+
+            thread.join()
+
+            # Save complete bot message to database
+            final_msg = ChatMessage(
                 user="bot",
                 message=message_text.strip(),
                 timestamp=datetime.utcnow(),
                 chat_id=chat_id,
             )
-            # Save bot message to database
-            bot_query = messages.insert().values(
-                user=msg.user,
-                message=msg.message,
-                timestamp=msg.timestamp,
-                chat_id=msg.chat_id
-            )
-            await database.execute(bot_query)
-            yield f"data: {msg.json()}\n\n"
-            await asyncio.sleep(0.01)
+            await database.execute(messages.insert().values(
+                user=final_msg.user,
+                message=final_msg.message,
+                timestamp=final_msg.timestamp,
+                chat_id=final_msg.chat_id
+            ))
 
-        thread.join()
+        except Exception as e:
+            print(f"Streaming error: {str(e)}")
+            yield f"data: {{\"error\": \"{str(e)}\"}}\n\n".encode('utf-8')
 
-    return StreamingResponse(stream(), media_type="text/event-stream")
+    return StreamingResponse(
+        stream(),
+        media_type="text/event-stream",
+        headers={
+            'Cache-Control': 'no-cache',
+            'Connection': 'keep-alive',
+            'Content-Type': 'text/event-stream',
+        }
+    )
+
 
 # -----------------------------
 # Load chat messages
