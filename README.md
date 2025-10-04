@@ -1,6 +1,7 @@
 # AI Chatbot - Portfolio Project
 
 A production-ready AI chatbot application featuring dual AI models (OpenAI + DialoGPT), multiple themes, and Docker deployment. Built with FastAPI, React, and modern web technologies.
+See a working demo here: https://chat-bot-ai.replit.app/
 
 ## 🌟 Features
 
