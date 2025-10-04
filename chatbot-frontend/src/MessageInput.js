@@ -1,7 +1,8 @@
 import React, { forwardRef, useState } from 'react';
-import { theme } from './theme';
+import { useTheme } from './ThemeContext';
 
 const MessageInput = forwardRef(({ onSend }, ref) => {
+  const { theme } = useTheme();
   const [value, setValue] = useState('');
 
   const handleSend = () => {

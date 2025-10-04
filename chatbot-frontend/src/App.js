@@ -242,6 +242,7 @@ function App() {
           display: 'flex',
           flexDirection: 'column',
           borderRight: `1px solid ${theme.colors.border.primary}`,
+          backgroundColor: theme.colors.background.sidebar,
           transition: `all ${theme.transitions.normal}`,
           overflow: 'hidden',
           position: isMobile ? 'fixed' : 'relative',

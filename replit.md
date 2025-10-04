@@ -90,9 +90,10 @@ The React frontend runs on `0.0.0.0:5000` with a Merlin AI-inspired design featu
 - **Multi-Theme System**:
   - Implemented ThemeContext with three themes: Dark, Light, and Ocean
   - Theme dropdown selector in header showing all available themes
-  - All components (App, ChatItem, Message, Settings) use ThemeContext for dynamic theming
+  - All components (App, ChatList, ChatWindow, MessageInput, ChatItem, Message, Settings) use ThemeContext for dynamic theming
   - Theme persistence in localStorage
   - Smooth transitions between themes
+  - Fixed: All components now properly update when theme changes (replaced static theme imports with ThemeContext hook)
 - **Font Awesome Integration**:
   - Integrated Font Awesome via CDN in public/index.html
   - Replaced emoji trash icons with professional Font Awesome icons in ChatItem component

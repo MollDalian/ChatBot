@@ -1,8 +1,9 @@
 import React, { useEffect, useRef } from 'react';
 import Message from './components/Message';
-import { theme } from './theme';
+import { useTheme } from './ThemeContext';
 
 function ChatWindow({ messages }) {
+  const { theme } = useTheme();
   const scrollRef = useRef(null);
 
   useEffect(() => {

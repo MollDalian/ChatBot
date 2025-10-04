@@ -1,8 +1,9 @@
 import React from 'react';
 import ChatItem from './components/ChatItem';
-import { theme } from './theme';
+import { useTheme } from './ThemeContext';
 
 function ChatList({ chats, onSelectChat, onDeleteChat, currentChatId }) {
+  const { theme } = useTheme();
   return (
     <div style={{
       height: '100%',
