@@ -97,6 +97,7 @@ The React frontend runs on `0.0.0.0:5000` with a Merlin AI-inspired design featu
   - Implemented dynamic viewport height (`100dvh`) for iOS Safari compatibility
   - Made main-content flex container with proper height constraints
   - Input box now always visible without scrolling on mobile devices
+  - Fixed auto-zoom on input focus by setting viewport `maximum-scale=1`
   - **Architect-approved** for production readiness
 
 ### Previous Production Deployment & Branding
