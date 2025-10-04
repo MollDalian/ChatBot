@@ -2,8 +2,8 @@ from fastapi import FastAPI, APIRouter, HTTPException, Header
 from fastapi.responses import StreamingResponse
 from datetime import datetime, UTC
 import uuid
-from typing import Optional, List, Dict, Any
-from models.chat import ChatMessage, Chat
+from typing import Optional, List, AsyncGenerator
+from models.chat import ChatMessage, Chat, HistoryMessage, ChatSummary, ApiResponse
 from models.db import chats, messages
 from db import database
 from ai_service import ai_service
@@ -25,7 +25,7 @@ async def create_chat(title: str = "New Chat") -> str:
 # -----------------------------
 # Get chat history
 # -----------------------------
-async def get_chat_history(chat_id: str) -> List[Dict[str, str]]:
+async def get_chat_history(chat_id: str) -> List[HistoryMessage]:
     """Retrieve chat history for context."""
     msg_query = messages.select().where(
         messages.c.chat_id == chat_id
@@ -33,10 +33,10 @@ async def get_chat_history(chat_id: str) -> List[Dict[str, str]]:
     msgs = await database.fetch_all(msg_query)
     
     return [
-        {
-            "user": msg["user"],
-            "message": msg["message"]
-        }
+        HistoryMessage(
+            user=msg["user"],
+            message=msg["message"]
+        )
         for msg in msgs
     ]
 
@@ -67,7 +67,8 @@ async def chat(
         chat_id = await create_chat(title=prompt[:50])  # Truncate title
 
     # Get chat history BEFORE saving user message (to avoid duplication)
-    history: List[Dict[str, str]] = await get_chat_history(chat_id) if chat_id else []
+    history_msgs: List[HistoryMessage] = await get_chat_history(chat_id) if chat_id else []
+    history = [{"user": msg.user, "message": msg.message} for msg in history_msgs]
 
     # Save user message
     user_msg = ChatMessage(
@@ -83,7 +84,7 @@ async def chat(
         chat_id=user_msg.chat_id
     ))
 
-    async def stream() -> Any:
+    async def stream() -> AsyncGenerator[bytes, None]:
         """Stream AI response tokens."""
         try:
             
@@ -170,18 +171,18 @@ async def load_chat(chat_id: str) -> Chat:
 # List all chats
 # -----------------------------
 @router.get("/chats")
-async def list_chats() -> List[Dict[str, Any]]:
+async def list_chats() -> List[ChatSummary]:
     """List all chat sessions."""
     query = chats.select()
     all_chats = await database.fetch_all(query)
-    return [dict(chat) for chat in all_chats]
+    return [ChatSummary(id=chat["id"], title=chat["title"]) for chat in all_chats]
 
 
 # -----------------------------
 # Delete chat
 # -----------------------------
 @router.delete("/chat/{chat_id}")
-async def delete_chat(chat_id: str) -> Dict[str, str]:
+async def delete_chat(chat_id: str) -> ApiResponse:
     """Delete a chat session and all its messages."""
     try:
         # Delete all messages for this chat
@@ -193,8 +194,8 @@ async def delete_chat(chat_id: str) -> Dict[str, str]:
         result = await database.execute(del_chat)
 
         if result:
-            return {"message": "Chat deleted successfully"}
-        return {"message": "Chat not found"}
+            return ApiResponse(message="Chat deleted successfully")
+        return ApiResponse(message="Chat not found")
 
     except Exception as e:
         raise HTTPException(

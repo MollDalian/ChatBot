@@ -42,9 +42,9 @@ localPort = 8000
 externalPort = 8000
 
 [[ports]]
-localPort = 33719
+localPort = 39539
 externalPort = 3001
 
 [deployment]
-deploymentTarget = "vm"
+deploymentTarget = "autoscale"
 run = ["bash", "start.sh"]
