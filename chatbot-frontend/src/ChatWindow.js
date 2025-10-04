@@ -1,4 +1,6 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef } from 'react';
+import Message from './components/Message';
+import { theme } from './theme';
 
 function ChatWindow({ messages }) {
   const scrollRef = useRef(null);
@@ -13,18 +15,34 @@ function ChatWindow({ messages }) {
     <div
       ref={scrollRef}
       style={{
-        minHeight: "300px",
-        maxHeight: "500px",
-        overflowY: "auto",
-        marginBottom: "1rem",
-        whiteSpace: "pre-wrap",
+        height: '100%',
+        overflowY: 'auto',
+        display: 'flex',
+        flexDirection: 'column',
+        backgroundColor: theme.colors.background.primary,
       }}
     >
-      {messages.map((msg, idx) => (
-        <div key={idx}>
-          <strong>{msg.user}:</strong> {msg.message}
+      {messages.length === 0 ? (
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          height: '100%',
+          color: theme.colors.text.tertiary,
+          fontSize: theme.fontSize.lg,
+        }}>
+          Start a conversation...
         </div>
-      ))}
+      ) : (
+        messages.map((msg, idx) => (
+          <Message 
+            key={idx}
+            user={msg.user}
+            message={msg.message}
+            timestamp={msg.timestamp}
+          />
+        ))
+      )}
     </div>
   );
 }
