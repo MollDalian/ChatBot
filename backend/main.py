@@ -55,9 +55,13 @@ if frontend_build.exists():
         return {"error": "Manifest not found"}
     
     # Serve index.html for all other routes (SPA fallback)
-    # This MUST be last to not intercept API routes
+    # Exclude API routes from SPA fallback
     @app.get("/{full_path:path}")
     async def serve_react(full_path: str):
+        # Don't serve React for API routes
+        if full_path.startswith(("chat", "chats", "load_chat")):
+            return {"error": "API endpoint not found"}
+        
         index_file = frontend_build / "index.html"
         if index_file.exists():
             return FileResponse(str(index_file))

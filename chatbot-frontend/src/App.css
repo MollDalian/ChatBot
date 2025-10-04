@@ -4,6 +4,7 @@
     left: 0;
     top: 0;
     height: 100vh;
+    height: 100dvh; /* Dynamic viewport height for iOS */
     z-index: 1000;
     box-shadow: 2px 0 8px rgba(0, 0, 0, 0.5);
   }
@@ -14,6 +15,11 @@
   
   .main-content {
     width: 100% !important;
+    height: 100vh !important;
+    height: 100dvh !important; /* Dynamic viewport height for iOS */
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
   }
   
   .message-avatar {
@@ -27,6 +33,7 @@
   
   .input-container {
     padding: 12px !important;
+    flex-shrink: 0 !important; /* Prevent input from being compressed */
   }
   
   .new-chat-button {
