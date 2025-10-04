@@ -1,8 +1,8 @@
-import React, { useState, useRef, useEffect } from "react";
-import { Container, Row, Col, Card, Button } from "react-bootstrap";
-import ChatList from "./ChatList";
-import ChatWindow from "./ChatWindow";
-import MessageInput from "./MessageInput";
+import React, { useState, useRef, useEffect } from 'react';
+import ChatList from './ChatList';
+import ChatWindow from './ChatWindow';
+import MessageInput from './MessageInput';
+import { theme } from './theme';
 
 function App() {
   const [messages, setMessages] = useState([]);
@@ -11,6 +11,7 @@ function App() {
   });
   const [allChats, setAllChats] = useState([]);
   const [isNewChat, setIsNewChat] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const eventSourceRef = useRef(null);
   const inputRef = useRef(null);
 
@@ -36,7 +37,7 @@ function App() {
       if (savedChatId) {
         loadChat(savedChatId);
       } else {
-        setMessages([{ user: "bot", message: "Hello! How can I help you today?" }]);
+        setMessages([{ user: 'bot', message: 'Hello! How can I help you today?' }]);
       }
     };
     initializeApp();
@@ -48,7 +49,7 @@ function App() {
       const data = await res.json();
       setAllChats(data);
     } catch (err) {
-      console.error("Failed to fetch chats:", err);
+      console.error('Failed to fetch chats:', err);
     }
   };
 
@@ -64,7 +65,7 @@ function App() {
         if (currentChatId === chatId) {
           setMessages([]);
           setCurrentChatId(null);
-          setMessages([{ user: "bot", message: "Hello! How can I help you today?" }]);
+          setMessages([{ user: 'bot', message: 'Hello! How can I help you today?' }]);
         }
 
         await fetchChats();
@@ -79,13 +80,13 @@ function App() {
   const sendMessage = async (prompt) => {
     if (!prompt.trim()) return;
 
-    setMessages((prev) => [...prev, { user: "user", message: prompt }]);
+    setMessages((prev) => [...prev, { user: 'user', message: prompt }]);
 
     if (eventSourceRef.current) eventSourceRef.current.close();
 
     eventSourceRef.current = new EventSource(
       `/chat?prompt=${encodeURIComponent(prompt)}${
-        currentChatId ? `&chat_id=${currentChatId}` : ""
+        currentChatId ? `&chat_id=${currentChatId}` : ''
       }`
     );
 
@@ -105,14 +106,14 @@ function App() {
         }
 
         setMessages((prev) => {
-          if (prev.length && prev[prev.length - 1].user === "bot") {
+          if (prev.length && prev[prev.length - 1].user === 'bot') {
             return [...prev.slice(0, -1), msg];
           } else {
             return [...prev, msg];
           }
         });
       } catch (err) {
-        console.error("Failed to parse message:", err);
+        console.error('Failed to parse message:', err);
       }
     };
 
@@ -128,41 +129,136 @@ function App() {
       setCurrentChatId(chatId);
       setMessages(data.messages || []);
     } catch (err) {
-      console.error("Failed to load chat:", err);
+      console.error('Failed to load chat:', err);
     }
   };
 
   const startNewChat = () => {
-    setMessages([{ user: "bot", message: "Hello! How can I help you today?" }]);
+    setMessages([{ user: 'bot', message: 'Hello! How can I help you today?' }]);
     setCurrentChatId(null);
     setIsNewChat(true);
   };
 
   return (
-    <Container className="mt-4">
-      <Row>
-        <Col md={4}>
-          <Button variant="primary" className="mb-3" onClick={startNewChat}>
+    <div style={{
+      display: 'flex',
+      height: '100vh',
+      width: '100vw',
+      backgroundColor: theme.colors.background.primary,
+      color: theme.colors.text.primary,
+      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+      overflow: 'hidden',
+    }}>
+      <div style={{
+        width: isSidebarOpen ? '280px' : '0',
+        flexShrink: 0,
+        display: 'flex',
+        flexDirection: 'column',
+        borderRight: `1px solid ${theme.colors.border.primary}`,
+        transition: `width ${theme.transitions.normal}`,
+        overflow: 'hidden',
+      }}>
+        <div style={{
+          padding: theme.spacing.lg,
+          borderBottom: `1px solid ${theme.colors.border.primary}`,
+          backgroundColor: theme.colors.background.sidebar,
+        }}>
+          <button
+            onClick={startNewChat}
+            style={{
+              width: '100%',
+              padding: `${theme.spacing.md} ${theme.spacing.lg}`,
+              backgroundColor: theme.colors.accent.primary,
+              color: theme.colors.text.primary,
+              border: 'none',
+              borderRadius: theme.borderRadius.lg,
+              cursor: 'pointer',
+              fontSize: theme.fontSize.md,
+              fontWeight: '600',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: theme.spacing.sm,
+              transition: `all ${theme.transitions.fast}`,
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = theme.colors.accent.hover;
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = theme.colors.accent.primary;
+            }}
+          >
+            <span style={{ fontSize: theme.fontSize.lg }}>+</span>
             New Chat
-          </Button>
+          </button>
+        </div>
+        
+        <div style={{ flex: 1, overflow: 'hidden' }}>
           <ChatList
             chats={allChats}
             onSelectChat={loadChat}
             onDeleteChat={handleDeleteChat}
             currentChatId={currentChatId}
           />
-        </Col>
-        <Col md={8}>
-          <Card>
-            <Card.Body>
-              <h3>Chatbot</h3>
-              <ChatWindow messages={messages} />
-              <MessageInput onSend={sendMessage} ref={inputRef} />
-            </Card.Body>
-          </Card>
-        </Col>
-      </Row>
-    </Container>
+        </div>
+      </div>
+
+      <div style={{
+        flex: 1,
+        display: 'flex',
+        flexDirection: 'column',
+        overflow: 'hidden',
+      }}>
+        <div style={{
+          padding: theme.spacing.lg,
+          borderBottom: `1px solid ${theme.colors.border.primary}`,
+          backgroundColor: theme.colors.background.secondary,
+          display: 'flex',
+          alignItems: 'center',
+          gap: theme.spacing.md,
+        }}>
+          <button
+            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+            style={{
+              padding: theme.spacing.sm,
+              backgroundColor: 'transparent',
+              color: theme.colors.text.secondary,
+              border: 'none',
+              borderRadius: theme.borderRadius.sm,
+              cursor: 'pointer',
+              fontSize: theme.fontSize.xl,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transition: `all ${theme.transitions.fast}`,
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = theme.colors.background.hover;
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'transparent';
+            }}
+          >
+            ☰
+          </button>
+          
+          <h2 style={{
+            margin: 0,
+            fontSize: theme.fontSize.lg,
+            fontWeight: '600',
+            color: theme.colors.text.primary,
+          }}>
+            AI Chat Assistant
+          </h2>
+        </div>
+
+        <div style={{ flex: 1, overflow: 'hidden' }}>
+          <ChatWindow messages={messages} />
+        </div>
+
+        <MessageInput onSend={sendMessage} ref={inputRef} />
+      </div>
+    </div>
   );
 }
 
