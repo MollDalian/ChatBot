@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faTrash } from '@fortawesome/free-solid-svg-icons';
 import { theme } from '../theme';
 
 function ChatItem({ chat, isActive, onSelect, onDelete }) {
@@ -83,7 +85,7 @@ function ChatItem({ chat, isActive, onSelect, onDelete }) {
           e.currentTarget.style.opacity = isHovered ? '1' : '0.6';
         }}
       >
-        🗑️
+        <FontAwesomeIcon icon={faTrash} />
       </button>
     </div>
   );
