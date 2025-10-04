@@ -44,7 +44,8 @@ function App() {
 
   const fetchChats = async () => {
     try {
-      const res = await fetch("http://127.0.0.1:8000/chats");
+      const backendUrl = process.env.REACT_APP_BACKEND_URL || "http://localhost:8000";
+      const res = await fetch(`${backendUrl}/chats`);
       const data = await res.json();
       setAllChats(data);
     } catch (err) {
@@ -54,7 +55,8 @@ function App() {
 
   const handleDeleteChat = async (chatId) => {
     try {
-      const response = await fetch(`http://127.0.0.1:8000/chat/${chatId}`, {
+      const backendUrl = process.env.REACT_APP_BACKEND_URL || "http://localhost:8000";
+      const response = await fetch(`${backendUrl}/chat/${chatId}`, {
         method: 'DELETE'
       });
 
@@ -83,8 +85,9 @@ function App() {
 
     if (eventSourceRef.current) eventSourceRef.current.close();
 
+    const backendUrl = process.env.REACT_APP_BACKEND_URL || "http://localhost:8000";
     eventSourceRef.current = new EventSource(
-      `http://127.0.0.1:8000/chat?prompt=${encodeURIComponent(prompt)}${
+      `${backendUrl}/chat?prompt=${encodeURIComponent(prompt)}${
         currentChatId ? `&chat_id=${currentChatId}` : ""
       }`
     );
@@ -123,7 +126,8 @@ function App() {
 
   const loadChat = async (chatId) => {
     try {
-      const res = await fetch(`http://127.0.0.1:8000/load_chat/${chatId}`);
+      const backendUrl = process.env.REACT_APP_BACKEND_URL || "http://localhost:8000";
+      const res = await fetch(`${backendUrl}/load_chat/${chatId}`);
       const data = await res.json();
       setCurrentChatId(chatId);
       setMessages(data.messages || []);
