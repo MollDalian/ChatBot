@@ -1,6 +1,5 @@
-from fastapi import FastAPI, APIRouter, Query, HTTPException
+from fastapi import FastAPI, APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
-from pydantic import BaseModel
 from datetime import datetime
 import asyncio
 import uuid
@@ -8,6 +7,8 @@ import torch
 from typing import Optional
 from transformers import AutoModelForCausalLM, AutoTokenizer, TextIteratorStreamer
 from models.chat import ChatMessage, Chat
+from models.db import chats, messages
+from db import database
 
 app = FastAPI()
 router = APIRouter()
@@ -15,7 +16,6 @@ router = APIRouter()
 # -----------------------------
 # In-memory "database"
 # -----------------------------
-chats = {}  # chat_id -> {"id": chat_id, "title": str, "messages": [ChatMessage]}
 messages_store = {}  # chat_id -> list of messages
 
 # -----------------------------
@@ -23,8 +23,9 @@ messages_store = {}  # chat_id -> list of messages
 # -----------------------------
 async def create_chat(title: str = "New Chat") -> str:
     chat_id = str(uuid.uuid4())
-    chats[chat_id] = {"id": chat_id, "title": title, "messages": []}
-    messages_store[chat_id] = []
+    query = chats.insert().values(id=chat_id, title=title)
+    await database.execute(query)
+
     return chat_id
 
 # -----------------------------
@@ -92,19 +93,34 @@ async def chat(prompt: str, chat_id: Optional[str] = None):
 # -----------------------------
 @router.get("/load_chat/{chat_id}", response_model=Chat)
 async def load_chat(chat_id: str):
-    if chat_id in chats:
-        chat_data = chats[chat_id]
-        chat_data["messages"] = messages_store.get(chat_id, [])
-        return chat_data
-    else:
+    chat_query = chats.select().where(chats.c.id == chat_id)
+    chat_data = await database.fetch_one(chat_query)
+    if not chat_data:
         raise HTTPException(status_code=404, detail="Chat not found")
+
+    msg_query = messages.select().where(messages.c.chat_id == chat_id).order_by(messages.c.timestamp)
+    messages_data = await database.fetch_all(msg_query)
+
+    messages_list = [
+        ChatMessage(
+            user=m["user"],
+            message=m["message"],
+            timestamp=m["timestamp"],
+            chat_id=m["chat_id"]
+        )
+        for m in messages_data
+    ]
+    return Chat(chat_id=chat_data["id"], title=chat_data["title"], messages=messages_list)
 
 # -----------------------------
 # List all chats
 # -----------------------------
 @router.get("/chats")
 async def list_chats():
-    return [{"chat_id": c["id"], "title": c["title"]} for c in chats.values()]
+    query = chats.select()
+    all_chats = await database.fetch_all(query)
+
+    return all_chats
 
 # -----------------------------
 # Include router
