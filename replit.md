@@ -86,7 +86,16 @@ The React frontend runs on `0.0.0.0:5000` with a Merlin AI-inspired design featu
 
 ## Recent Changes (2025-10-04)
 
-### Latest Production & Mobile Fixes (Current)
+### Latest Deployment Optimization (Current)
+- **DialoGPT Lazy Loading**:
+  - Implemented lazy loading for DialoGPT model to fix Autoscale deployment timeout
+  - Model now loads only when actually needed (when no OpenAI API key provided)
+  - Prevents HuggingFace 429 rate limit errors during startup
+  - Startup time dramatically reduced - application opens port 5000 immediately
+  - Proper type hints with Optional types and assertions for type safety
+  - Autoscale deployment now fully functional for cost-effective hosting (~$1/month)
+
+### Previous Production & Mobile Fixes
 - **Production API Fix**:
   - Fixed catch-all route intercepting API requests in production
   - Added path exclusion for API routes (`chat`, `chats`, `load_chat`) from SPA fallback

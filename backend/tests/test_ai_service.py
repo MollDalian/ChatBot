@@ -140,11 +140,13 @@ async def test_chat_history_limit(ai_service):
 
 
 def test_ai_service_initialization():
-    """Test that AIService initializes correctly."""
+    """Test that AIService initializes correctly with lazy loading."""
     service = AIService()
-    assert service.fallback_model is not None
-    assert service.fallback_tokenizer is not None
+    # With lazy loading, model and tokenizer should be None initially
+    assert service.fallback_model is None
+    assert service.fallback_tokenizer is None
     assert service.fallback_model_name == "microsoft/DialoGPT-medium"
+    assert service._model_loaded is False
 
 
 @pytest.mark.asyncio

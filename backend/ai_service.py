@@ -10,15 +10,25 @@ class AIService:
     """Service for handling AI model interactions with support for OpenAI and local models."""
     
     def __init__(self):
-        """Initialize the AI service with DialoGPT as fallback model."""
-        # Load DialoGPT for free fallback
+        """Initialize the AI service. DialoGPT loads lazily when needed."""
         self.fallback_model_name: str = "microsoft/DialoGPT-medium"
-        self.fallback_tokenizer = AutoTokenizer.from_pretrained(self.fallback_model_name)
-        self.fallback_model = AutoModelForCausalLM.from_pretrained(self.fallback_model_name)
-        self.fallback_model.eval()
-        
-        if torch.cuda.is_available():
-            self.fallback_model.to("cuda")
+        self.fallback_tokenizer: Optional[AutoTokenizer] = None
+        self.fallback_model: Optional[AutoModelForCausalLM] = None
+        self._model_loaded: bool = False
+    
+    def _load_dialogpt_model(self) -> None:
+        """Lazy load DialoGPT model only when needed (when no API key provided)."""
+        if not self._model_loaded:
+            print(f"Loading DialoGPT model ({self.fallback_model_name})...")
+            self.fallback_tokenizer = AutoTokenizer.from_pretrained(self.fallback_model_name)
+            self.fallback_model = AutoModelForCausalLM.from_pretrained(self.fallback_model_name)
+            self.fallback_model.eval()
+            
+            if torch.cuda.is_available():
+                self.fallback_model.to("cuda")
+            
+            self._model_loaded = True
+            print("DialoGPT model loaded successfully.")
     
     async def generate_response(
         self,
@@ -92,6 +102,13 @@ class AIService:
     ) -> AsyncGenerator[str, None]:
         """Generate response using DialoGPT (free fallback)."""
         try:
+            # Lazy load the model only when needed
+            self._load_dialogpt_model()
+            
+            # Ensure models are loaded (for type checker)
+            assert self.fallback_tokenizer is not None, "Tokenizer failed to load"
+            assert self.fallback_model is not None, "Model failed to load"
+            
             # Build conversation history
             conversation = ""
             if chat_history:
