@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import ChatList from './ChatList';
 import ChatWindow from './ChatWindow';
 import MessageInput from './MessageInput';
+import Settings from './components/Settings';
 import { theme } from './theme';
 import './App.css';
 
@@ -14,6 +15,7 @@ function App() {
   const [isNewChat, setIsNewChat] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth > 768);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const eventSourceRef = useRef(null);
   const inputRef = useRef(null);
 
@@ -108,11 +110,21 @@ function App() {
 
     if (eventSourceRef.current) eventSourceRef.current.close();
 
-    eventSourceRef.current = new EventSource(
-      `/chat?prompt=${encodeURIComponent(prompt)}${
-        currentChatId ? `&chat_id=${currentChatId}` : ''
-      }`
-    );
+    // Get API key and model from localStorage
+    const useOpenAI = localStorage.getItem('use_openai') === 'true';
+    const apiKey = localStorage.getItem('openai_api_key') || '';
+    const model = localStorage.getItem('openai_model') || 'gpt-3.5-turbo';
+
+    // Build URL with API key if available
+    let url = `/chat?prompt=${encodeURIComponent(prompt)}`;
+    if (currentChatId) {
+      url += `&chat_id=${currentChatId}`;
+    }
+    if (useOpenAI && apiKey) {
+      url += `&api_key=${encodeURIComponent(apiKey)}&model=${encodeURIComponent(model)}`;
+    }
+
+    eventSourceRef.current = new EventSource(url);
 
     eventSourceRef.current.onmessage = (event) => {
       try {
@@ -301,9 +313,36 @@ function App() {
             fontSize: theme.fontSize.lg,
             fontWeight: '600',
             color: theme.colors.text.primary,
+            flex: 1,
           }}>
             AI Chat Assistant
           </h2>
+          
+          <button
+            onClick={() => setIsSettingsOpen(true)}
+            style={{
+              padding: theme.spacing.sm,
+              backgroundColor: 'transparent',
+              color: theme.colors.text.secondary,
+              border: 'none',
+              borderRadius: theme.borderRadius.sm,
+              cursor: 'pointer',
+              fontSize: theme.fontSize.lg,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transition: `all ${theme.transitions.fast}`,
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = theme.colors.background.hover;
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'transparent';
+            }}
+            title="Settings"
+          >
+            ⚙️
+          </button>
         </div>
 
         <div style={{ flex: 1, overflow: 'hidden' }}>
@@ -312,6 +351,11 @@ function App() {
 
         <MessageInput onSend={sendMessage} ref={inputRef} />
       </div>
+
+      <Settings 
+        isOpen={isSettingsOpen} 
+        onClose={() => setIsSettingsOpen(false)} 
+      />
     </div>
   );
 }

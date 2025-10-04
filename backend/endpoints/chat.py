@@ -1,57 +1,79 @@
-from fastapi import FastAPI, APIRouter, HTTPException
+from fastapi import FastAPI, APIRouter, HTTPException, Header
 from fastapi.responses import StreamingResponse
-from datetime import datetime
-import asyncio
+from datetime import datetime, UTC
 import uuid
-import torch
-import threading
-from typing import Optional
-from transformers import AutoModelForCausalLM, AutoTokenizer, TextIteratorStreamer
+from typing import Optional, List, Dict, Any
 from models.chat import ChatMessage, Chat
 from models.db import chats, messages
 from db import database
+from ai_service import ai_service
 
 app = FastAPI()
 router = APIRouter()
 
 # -----------------------------
-# In-memory "database"
-# -----------------------------
-messages_store = {}  # chat_id -> list of messages
-
-# -----------------------------
 # Helper to create a new chat
 # -----------------------------
 async def create_chat(title: str = "New Chat") -> str:
-    chat_id = str(uuid.uuid4())
+    """Create a new chat session in the database."""
+    chat_id: str = str(uuid.uuid4())
     query = chats.insert().values(id=chat_id, title=title)
     await database.execute(query)
-
     return chat_id
 
+
 # -----------------------------
-# Load Hugging Face model
+# Get chat history
 # -----------------------------
-model_name = "gpt2"  # You can replace with any Hugging Face causal LM
-tokenizer = AutoTokenizer.from_pretrained(model_name)
-model = AutoModelForCausalLM.from_pretrained(model_name)
-model.eval()
-if torch.cuda.is_available():
-    model.to("cuda")
+async def get_chat_history(chat_id: str) -> List[Dict[str, str]]:
+    """Retrieve chat history for context."""
+    msg_query = messages.select().where(
+        messages.c.chat_id == chat_id
+    ).order_by(messages.c.timestamp)
+    msgs = await database.fetch_all(msg_query)
+    
+    return [
+        {
+            "user": msg["user"],
+            "message": msg["message"]
+        }
+        for msg in msgs
+    ]
+
 
 # -----------------------------
 # Streaming bot response endpoint
 # -----------------------------
 @router.get("/chat")
-async def chat(prompt: str, chat_id: Optional[str] = None):
+async def chat(
+    prompt: str,
+    chat_id: Optional[str] = None,
+    api_key: Optional[str] = None,
+    model: str = "gpt-3.5-turbo"
+) -> StreamingResponse:
+    """
+    Chat endpoint with streaming responses.
+    
+    Args:
+        prompt: User's message
+        chat_id: Optional chat session ID (creates new if None)
+        api_key: Optional OpenAI API key from query parameter
+        model: AI model to use (default: gpt-3.5-turbo)
+    
+    Returns:
+        StreamingResponse with Server-Sent Events
+    """
     if not chat_id:
-        chat_id = await create_chat(title=prompt)
+        chat_id = await create_chat(title=prompt[:50])  # Truncate title
+
+    # Get chat history BEFORE saving user message (to avoid duplication)
+    history: List[Dict[str, str]] = await get_chat_history(chat_id) if chat_id else []
 
     # Save user message
     user_msg = ChatMessage(
         user="user",
         message=prompt,
-        timestamp=datetime.utcnow(),
+        timestamp=datetime.now(UTC),
         chat_id=chat_id,
     )
     await database.execute(messages.insert().values(
@@ -61,49 +83,33 @@ async def chat(prompt: str, chat_id: Optional[str] = None):
         chat_id=user_msg.chat_id
     ))
 
-    async def stream():
+    async def stream() -> Any:
+        """Stream AI response tokens."""
         try:
-            formatted_prompt = f"Q: {prompt}\nA:"
-            input_ids = tokenizer(formatted_prompt, return_tensors="pt").input_ids
-            if torch.cuda.is_available():
-                input_ids = input_ids.to("cuda")
-
-            message_text = ""
-            streamer = TextIteratorStreamer(tokenizer, skip_prompt=True, skip_special_tokens=True)
-
-            thread = threading.Thread(
-                target=model.generate,
-                kwargs={
-                    "input_ids": input_ids,
-                    "max_new_tokens": 100,
-                    "do_sample": True,
-                    "temperature": 0.7,
-                    "top_p": 0.9,
-                    "pad_token_id": tokenizer.eos_token_id,
-                    "streamer": streamer,
-                    "num_return_sequences": 1,
-                }
-            )
-            thread.start()
-
-            for token_text in streamer:
-                if token_text.strip():
-                    message_text += token_text
-                    msg = ChatMessage(
-                        user="bot",
-                        message=message_text.strip(),
-                        timestamp=datetime.utcnow(),
-                        chat_id=chat_id,
-                    )
-                    yield f"data: {msg.json()}\n\n".encode('utf-8')
-
-            thread.join()
+            
+            message_text: str = ""
+            
+            # Stream response from AI service
+            async for token in ai_service.generate_response(
+                prompt=prompt,
+                chat_history=history,
+                api_key=api_key,
+                model=model
+            ):
+                message_text += token
+                msg = ChatMessage(
+                    user="bot",
+                    message=message_text.strip(),
+                    timestamp=datetime.now(UTC),
+                    chat_id=chat_id,
+                )
+                yield f"data: {msg.model_dump_json()}\n\n".encode('utf-8')
 
             # Save complete bot message to database
             final_msg = ChatMessage(
                 user="bot",
                 message=message_text.strip(),
-                timestamp=datetime.utcnow(),
+                timestamp=datetime.now(UTC),
                 chat_id=chat_id,
             )
             await database.execute(messages.insert().values(
@@ -132,16 +138,19 @@ async def chat(prompt: str, chat_id: Optional[str] = None):
 # Load chat messages
 # -----------------------------
 @router.get("/load_chat/{chat_id}", response_model=Chat)
-async def load_chat(chat_id: str):
+async def load_chat(chat_id: str) -> Chat:
+    """Load a specific chat with its message history."""
     chat_query = chats.select().where(chats.c.id == chat_id)
     chat_data = await database.fetch_one(chat_query)
     if not chat_data:
         raise HTTPException(status_code=404, detail="Chat not found")
 
-    msg_query = messages.select().where(messages.c.chat_id == chat_id).order_by(messages.c.timestamp)
+    msg_query = messages.select().where(
+        messages.c.chat_id == chat_id
+    ).order_by(messages.c.timestamp)
     messages_data = await database.fetch_all(msg_query)
 
-    messages_list = [
+    messages_list: List[ChatMessage] = [
         ChatMessage(
             user=m["user"],
             message=m["message"],
@@ -150,20 +159,30 @@ async def load_chat(chat_id: str):
         )
         for m in messages_data
     ]
-    return Chat(chat_id=chat_data["id"], title=chat_data["title"], messages=messages_list)
+    return Chat(
+        chat_id=chat_data["id"],
+        title=chat_data["title"],
+        messages=messages_list
+    )
+
 
 # -----------------------------
 # List all chats
 # -----------------------------
 @router.get("/chats")
-async def list_chats():
+async def list_chats() -> List[Dict[str, Any]]:
+    """List all chat sessions."""
     query = chats.select()
     all_chats = await database.fetch_all(query)
+    return [dict(chat) for chat in all_chats]
 
-    return all_chats
 
+# -----------------------------
+# Delete chat
+# -----------------------------
 @router.delete("/chat/{chat_id}")
-async def delete_chat(chat_id: str):
+async def delete_chat(chat_id: str) -> Dict[str, str]:
+    """Delete a chat session and all its messages."""
     try:
         # Delete all messages for this chat
         delete_messages = messages.delete().where(messages.c.chat_id == chat_id)
