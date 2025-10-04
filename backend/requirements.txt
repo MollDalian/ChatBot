@@ -6,6 +6,7 @@ transformers==4.46.0
 sqlalchemy==1.4.53
 pydantic==2.5.0
 aiosqlite==0.19.0
+aiofiles==23.2.1
 pytest==7.4.3
 pytest-asyncio==0.21.1
 httpx==0.25.2
