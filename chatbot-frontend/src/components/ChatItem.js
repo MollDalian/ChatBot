@@ -52,37 +52,39 @@ function ChatItem({ chat, isActive, onSelect, onDelete }) {
         </span>
       </div>
       
-      {isHovered && (
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onDelete(chat.id);
-          }}
-          style={{
-            padding: `${theme.spacing.xs} ${theme.spacing.sm}`,
-            backgroundColor: 'transparent',
-            color: theme.colors.text.tertiary,
-            border: 'none',
-            borderRadius: theme.borderRadius.sm,
-            cursor: 'pointer',
-            fontSize: theme.fontSize.md,
-            transition: `all ${theme.transitions.fast}`,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = theme.colors.accent.danger;
-            e.currentTarget.style.color = theme.colors.text.primary;
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = 'transparent';
-            e.currentTarget.style.color = theme.colors.text.tertiary;
-          }}
-        >
-          🗑️
-        </button>
-      )}
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          onDelete(chat.id);
+        }}
+        style={{
+          padding: `${theme.spacing.xs} ${theme.spacing.sm}`,
+          backgroundColor: 'transparent',
+          color: isHovered ? theme.colors.text.secondary : theme.colors.text.muted,
+          border: 'none',
+          borderRadius: theme.borderRadius.sm,
+          cursor: 'pointer',
+          fontSize: theme.fontSize.md,
+          transition: `all ${theme.transitions.fast}`,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexShrink: 0,
+          opacity: isHovered ? 1 : 0.6,
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.backgroundColor = theme.colors.accent.danger;
+          e.currentTarget.style.color = theme.colors.text.primary;
+          e.currentTarget.style.opacity = '1';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.backgroundColor = 'transparent';
+          e.currentTarget.style.color = isHovered ? theme.colors.text.secondary : theme.colors.text.muted;
+          e.currentTarget.style.opacity = isHovered ? '1' : '0.6';
+        }}
+      >
+        🗑️
+      </button>
     </div>
   );
 }

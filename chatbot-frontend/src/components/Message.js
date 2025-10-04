@@ -24,7 +24,6 @@ function Message({ user, message, timestamp }) {
       gap: theme.spacing.md,
       padding: `${theme.spacing.lg} ${theme.spacing.xl}`,
       maxWidth: '100%',
-      backgroundColor: isBot ? theme.colors.background.messageBot : 'transparent',
     }}>
       <div style={{
         fontSize: theme.fontSize.xl,
@@ -75,6 +74,10 @@ function Message({ user, message, timestamp }) {
           color: theme.colors.text.primary,
           whiteSpace: 'pre-wrap',
           wordBreak: 'break-word',
+          backgroundColor: isBot ? theme.colors.background.messageBot : theme.colors.background.messageUser,
+          padding: `${theme.spacing.md} ${theme.spacing.lg}`,
+          borderRadius: theme.borderRadius.lg,
+          boxShadow: theme.shadows.sm,
         }}>
           {message}
         </div>

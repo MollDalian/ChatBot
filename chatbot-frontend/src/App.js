@@ -50,12 +50,21 @@ function App() {
       await fetchChats();
       const savedChatId = localStorage.getItem('lastActiveChatId');
       if (savedChatId) {
-        loadChat(savedChatId);
+        try {
+          const res = await fetch(`/load_chat/${savedChatId}`);
+          const data = await res.json();
+          setCurrentChatId(savedChatId);
+          setMessages(data.messages || []);
+        } catch (err) {
+          console.error('Failed to load chat:', err);
+          setMessages([{ user: 'bot', message: 'Hello! How can I help you today?' }]);
+        }
       } else {
         setMessages([{ user: 'bot', message: 'Hello! How can I help you today?' }]);
       }
     };
     initializeApp();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchChats = async () => {
