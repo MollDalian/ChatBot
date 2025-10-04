@@ -20,10 +20,16 @@ This is a full-stack AI chatbot application with a React frontend and FastAPI ba
 ├── chatbot-frontend/          # React frontend
 │   ├── public/               # Static files
 │   ├── src/                  # React components
+│   │   ├── components/      # Reusable components
+│   │   │   ├── Message.js  # Individual message bubble component
+│   │   │   └── ChatItem.js # Chat list item component
 │   │   ├── App.js           # Main application component
 │   │   ├── ChatList.js      # Chat history sidebar
 │   │   ├── ChatWindow.js    # Message display
-│   │   └── MessageInput.js  # Message input component
+│   │   ├── MessageInput.js  # Message input component
+│   │   ├── theme.js         # Theme constants (colors, spacing, etc.)
+│   │   ├── App.css          # Responsive styles
+│   │   └── index.css        # Global styles
 │   ├── package.json         # Node.js dependencies
 │   └── .env                 # Environment variables
 └── start.sh                  # Startup script for both services
@@ -43,8 +49,8 @@ This is a full-stack AI chatbot application with a React frontend and FastAPI ba
 
 ### Frontend
 - **React**: UI library
-- **React Bootstrap**: UI components
 - **Create React App**: Build tooling
+- **Custom Theme System**: Modular theme constants for easy customization
 
 ## Architecture
 
@@ -56,14 +62,22 @@ The backend runs on `0.0.0.0:8000` and provides the following endpoints:
 - `DELETE /chat/{chat_id}` - Delete a chat session
 
 ### Frontend (Port 5000)
-The React frontend runs on `0.0.0.0:5000` and provides:
-- Chat interface with message history
-- Sidebar with chat list
-- New chat creation
-- Chat deletion
-- Real-time streaming responses using Server-Sent Events (SSE)
+The React frontend runs on `0.0.0.0:5000` with a Merlin AI-inspired design featuring:
+- **Dark theme** with modern, minimalist aesthetics
+- **Message bubbles** with avatars, timestamps, and color-coded user/bot messages
+- **Responsive sidebar** with chat history (collapsible on mobile)
+- **Modular components** - Message, ChatItem for easy customization
+- **Mobile-friendly** design with touch-accessible controls
+- **Real-time streaming** responses using Server-Sent Events (SSE)
+- **Theme system** for easy color and style customization
 
 ## Recent Changes (2025-10-04)
+- **Redesigned UI with Merlin AI-inspired style** (dark theme, modern aesthetics)
+- Created modular component architecture (Message, ChatItem components)
+- Implemented theme system for easy customization (colors, spacing, fonts)
+- Added responsive design with mobile-friendly layout
+- Enhanced message display with bubbles, avatars, and timestamps
+- Improved sidebar with hover effects and touch-accessible controls
 - Configured the application for Replit environment
 - Updated CORS settings to allow all origins for Replit's proxy
 - Modified frontend to use relative URLs for API calls through React proxy
