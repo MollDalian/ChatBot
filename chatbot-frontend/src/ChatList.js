@@ -1,7 +1,10 @@
 import React from "react";
 
-function ChatList({ chats, onSelectChat }) {
-debugger;
+function ChatList({ chats, onSelectChat, onDeleteChat }) {
+  const handleDelete = (e, chatId) => {
+    e.stopPropagation(); // Prevent chat selection when deleting
+    onDeleteChat(chatId);
+  };
 
   return (
     <div>
@@ -14,10 +17,26 @@ debugger;
             padding: "8px",
             borderBottom: "1px solid #ccc",
             cursor: "pointer",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center"
           }}
           onClick={() => onSelectChat(chat.id)}
         >
-          {chat.title}
+          <span>{chat.title}</span>
+          <button
+            onClick={(e) => handleDelete(e, chat.id)}
+            style={{
+              padding: "4px 8px",
+              backgroundColor: "#ff4444",
+              color: "white",
+              border: "none",
+              borderRadius: "4px",
+              cursor: "pointer"
+            }}
+          >
+            Delete
+          </button>
         </div>
       ))}
     </div>

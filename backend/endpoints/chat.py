@@ -162,6 +162,28 @@ async def list_chats():
 
     return all_chats
 
+@router.delete("/chat/{chat_id}")
+async def delete_chat(chat_id: str):
+    try:
+        # Delete all messages for this chat
+        delete_messages = messages.delete().where(messages.c.chat_id == chat_id)
+        await database.execute(delete_messages)
+
+        # Delete the chat
+        delete_chat = chats.delete().where(chats.c.id == chat_id)
+        result = await database.execute(delete_chat)
+
+        if result:
+            return {"message": "Chat deleted successfully"}
+        return {"message": "Chat not found"}
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error deleting chat: {str(e)}"
+        )
+
+
 # -----------------------------
 # Include router
 # -----------------------------

@@ -35,6 +35,34 @@ function App() {
     }
   };
 
+  const handleDeleteChat = async (chatId) => {
+  try {
+    const response = await fetch(`http://127.0.0.1:8000/chat/${chatId}`, {
+      method: 'DELETE'
+    });
+
+    if (response.ok) {
+      // Remove chat from local state using id instead of chat_id
+      setAllChats(prevChats => prevChats.filter(chat => chat.id !== chatId));
+
+      // Clear messages and reset current chat if the deleted chat was selected
+      if (currentChatId === chatId) {
+        setMessages([]);
+        setCurrentChatId(null);
+        startNewChat();
+      }
+
+      // Refresh the chat list to ensure sync with backend
+      await fetchChats();
+    } else {
+      console.error('Failed to delete chat');
+    }
+  } catch (error) {
+    console.error('Error deleting chat:', error);
+  }
+};
+
+
   const sendMessage = async (prompt) => {
     if (!prompt.trim()) return;
 
@@ -44,7 +72,9 @@ function App() {
     if (eventSourceRef.current) eventSourceRef.current.close();
 
     eventSourceRef.current = new EventSource(
-      `http://127.0.0.1:8000/chat?prompt=${encodeURIComponent(prompt)}`
+      `http://127.0.0.1:8000/chat?prompt=${encodeURIComponent(prompt)}${
+        currentChatId ? `&chat_id=${currentChatId}` : ""
+      }`
     );
 
     eventSourceRef.current.onmessage = (event) => {
@@ -105,7 +135,11 @@ function App() {
           <Button variant="primary" className="mb-3" onClick={startNewChat}>
             New Chat
           </Button>
-          <ChatList chats={allChats} onSelectChat={loadChat} />
+          <ChatList
+            chats={allChats}
+            onSelectChat={loadChat}
+            onDeleteChat={handleDeleteChat}
+          />
         </Col>
         <Col md={8}>
           <Card>
