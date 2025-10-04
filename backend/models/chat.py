@@ -6,6 +6,7 @@ class ChatMessage(BaseModel):
     user: str                 # "user" or "bot"
     message: str
     timestamp: datetime
+    chat_id: str = None
 
 class Chat(BaseModel):
     chat_id: str

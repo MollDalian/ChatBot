@@ -6,6 +6,7 @@ import asyncio
 import uuid
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer, TextIteratorStreamer
+from models.chat import ChatMessage, Chat
 
 app = FastAPI()
 router = APIRouter()
@@ -15,20 +16,6 @@ router = APIRouter()
 # -----------------------------
 chats = {}  # chat_id -> {"id": chat_id, "title": str, "messages": [ChatMessage]}
 messages_store = {}  # chat_id -> list of messages
-
-# -----------------------------
-# Pydantic models
-# -----------------------------
-class ChatMessage(BaseModel):
-    user: str
-    message: str
-    timestamp: datetime = None
-    chat_id: str = None
-
-class Chat(BaseModel):
-    id: str
-    title: str
-    messages: list[ChatMessage] = []
 
 # -----------------------------
 # Helper to create a new chat
