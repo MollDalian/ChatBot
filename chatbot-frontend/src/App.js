@@ -16,8 +16,32 @@ function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth > 768);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [currentModel, setCurrentModel] = useState('DialoGPT');
   const eventSourceRef = useRef(null);
   const inputRef = useRef(null);
+
+  // Update current model display when settings change
+  useEffect(() => {
+    const updateModelDisplay = () => {
+      const useOpenAI = localStorage.getItem('use_openai') === 'true';
+      const model = localStorage.getItem('openai_model') || 'gpt-3.5-turbo';
+      
+      if (useOpenAI) {
+        if (model === 'gpt-3.5-turbo') setCurrentModel('GPT-3.5');
+        else if (model === 'gpt-4') setCurrentModel('GPT-4');
+        else if (model === 'gpt-4-turbo') setCurrentModel('GPT-4 Turbo');
+        else setCurrentModel('OpenAI');
+      } else {
+        setCurrentModel('DialoGPT');
+      }
+    };
+
+    updateModelDisplay();
+    
+    // Listen for storage changes
+    window.addEventListener('storage', updateModelDisplay);
+    return () => window.removeEventListener('storage', updateModelDisplay);
+  }, [isSettingsOpen]); // Update when settings close
 
   useEffect(() => {
     const handleResize = () => {
@@ -321,27 +345,36 @@ function App() {
           <button
             onClick={() => setIsSettingsOpen(true)}
             style={{
-              padding: theme.spacing.sm,
+              padding: `${theme.spacing.sm} ${theme.spacing.md}`,
               backgroundColor: 'transparent',
-              color: theme.colors.text.secondary,
-              border: 'none',
-              borderRadius: theme.borderRadius.sm,
+              color: theme.colors.text.primary,
+              border: `1px solid ${theme.colors.border.primary}`,
+              borderRadius: theme.borderRadius.md,
               cursor: 'pointer',
-              fontSize: theme.fontSize.lg,
+              fontSize: theme.fontSize.sm,
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center',
+              gap: theme.spacing.sm,
               transition: `all ${theme.transitions.fast}`,
+              fontWeight: '500',
+              whiteSpace: 'nowrap',
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.backgroundColor = theme.colors.background.hover;
+              e.currentTarget.style.borderColor = theme.colors.border.active;
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.backgroundColor = 'transparent';
+              e.currentTarget.style.borderColor = theme.colors.border.primary;
             }}
-            title="Settings"
+            title="Change AI Model"
           >
-            ⚙️
+            <span>{currentModel}</span>
+            <span style={{ 
+              fontSize: '10px',
+              opacity: 0.7,
+              marginLeft: theme.spacing.xs,
+            }}>▼</span>
           </button>
         </div>
 
