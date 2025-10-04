@@ -3,10 +3,12 @@ import ChatList from './ChatList';
 import ChatWindow from './ChatWindow';
 import MessageInput from './MessageInput';
 import Settings from './components/Settings';
-import { theme } from './theme';
+import { useTheme } from './ThemeContext';
+import { themes } from './themes';
 import './App.css';
 
 function App() {
+  const { theme, currentTheme, switchTheme } = useTheme();
   const [messages, setMessages] = useState([]);
   const [currentChatId, setCurrentChatId] = useState(() => {
     return localStorage.getItem('lastActiveChatId') || null;
@@ -342,6 +344,46 @@ function App() {
             AI Chat Assistant
           </h2>
           
+          <button
+            onClick={() => {
+              const themeKeys = Object.keys(themes);
+              const currentIndex = themeKeys.indexOf(currentTheme);
+              const nextIndex = (currentIndex + 1) % themeKeys.length;
+              switchTheme(themeKeys[nextIndex]);
+            }}
+            style={{
+              padding: `${theme.spacing.sm} ${theme.spacing.md}`,
+              backgroundColor: 'transparent',
+              color: theme.colors.text.primary,
+              border: `1px solid ${theme.colors.border.primary}`,
+              borderRadius: theme.borderRadius.md,
+              cursor: 'pointer',
+              fontSize: theme.fontSize.sm,
+              display: 'flex',
+              alignItems: 'center',
+              gap: theme.spacing.sm,
+              transition: `all ${theme.transitions.fast}`,
+              fontWeight: '500',
+              whiteSpace: 'nowrap',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = theme.colors.background.hover;
+              e.currentTarget.style.borderColor = theme.colors.border.active;
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'transparent';
+              e.currentTarget.style.borderColor = theme.colors.border.primary;
+            }}
+            title="Change Theme"
+          >
+            <span>{themes[currentTheme]?.name || 'Dark'}</span>
+            <span style={{ 
+              fontSize: '10px',
+              opacity: 0.7,
+              marginLeft: theme.spacing.xs,
+            }}>▼</span>
+          </button>
+
           <button
             onClick={() => setIsSettingsOpen(true)}
             style={{
