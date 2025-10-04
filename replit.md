@@ -86,7 +86,23 @@ The React frontend runs on `0.0.0.0:5000` with a Merlin AI-inspired design featu
 
 ## Recent Changes (2025-10-04)
 
-### Latest Type Safety & Deployment Improvements
+### Latest Production Deployment & Branding (Current)
+- **Production Deployment Fix**:
+  - Fixed proxy error in production by configuring FastAPI to serve React build files
+  - Single-server architecture: FastAPI serves both API endpoints and static frontend
+  - Proper route ordering: API routes → static files → SPA fallback
+  - Build step: Compiles React app during deployment
+  - Run step: Single FastAPI server on port 5000
+  - Added `aiofiles` for optimized static file serving
+- **Branding Updates**:
+  - Updated browser tab title from "React App" to "AI Chat Assistant"
+  - Added custom AI chatbot favicon (both .ico and .png formats)
+  - Improved SEO with updated meta description
+- **Deployment Configuration**:
+  - Autoscale deployment with optimized build/run steps
+  - Production-ready for ~$1/month hosting on Replit
+
+### Previous Type Safety & Deployment Improvements
 - **Professional Type Hints**:
   - Created new Pydantic models for type safety: `HistoryMessage`, `ChatSummary`, `ApiResponse`
   - Replaced `Dict[str, str]` and `Any` return types with explicit Pydantic models
@@ -96,9 +112,6 @@ The React frontend runs on `0.0.0.0:5000` with a Merlin AI-inspired design featu
   - Updated `stream()` generator to return `AsyncGenerator[bytes, None]` instead of `Any`
   - Fixed `ChatMessage.chat_id` to use `Optional[str]` instead of `str = None`
   - **Architect-approved** for portfolio-grade code quality
-- **Deployment Configuration**:
-  - Changed deployment target from CloudRun to **Autoscale** for optimal FastAPI + React hosting
-  - Optimized for ~$1/month cost-effective hosting on Replit
 
 ### Previous Portfolio Enhancements
 - **Multi-Theme System**:
