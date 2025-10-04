@@ -1,7 +1,8 @@
 import React from 'react';
-import { theme } from '../theme';
+import { useTheme } from '../ThemeContext';
 
 function Message({ user, message, timestamp }) {
+  const { theme } = useTheme();
   const isBot = user === 'bot';
   
   const formatTimestamp = (ts) => {

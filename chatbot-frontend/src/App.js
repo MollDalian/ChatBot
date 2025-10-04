@@ -19,6 +19,7 @@ function App() {
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [currentModel, setCurrentModel] = useState('DialoGPT');
+  const [isThemeDropdownOpen, setIsThemeDropdownOpen] = useState(false);
   const eventSourceRef = useRef(null);
   const inputRef = useRef(null);
 
@@ -344,45 +345,102 @@ function App() {
             AI Chat Assistant
           </h2>
           
-          <button
-            onClick={() => {
-              const themeKeys = Object.keys(themes);
-              const currentIndex = themeKeys.indexOf(currentTheme);
-              const nextIndex = (currentIndex + 1) % themeKeys.length;
-              switchTheme(themeKeys[nextIndex]);
-            }}
-            style={{
-              padding: `${theme.spacing.sm} ${theme.spacing.md}`,
-              backgroundColor: 'transparent',
-              color: theme.colors.text.primary,
-              border: `1px solid ${theme.colors.border.primary}`,
-              borderRadius: theme.borderRadius.md,
-              cursor: 'pointer',
-              fontSize: theme.fontSize.sm,
-              display: 'flex',
-              alignItems: 'center',
-              gap: theme.spacing.sm,
-              transition: `all ${theme.transitions.fast}`,
-              fontWeight: '500',
-              whiteSpace: 'nowrap',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = theme.colors.background.hover;
-              e.currentTarget.style.borderColor = theme.colors.border.active;
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = 'transparent';
-              e.currentTarget.style.borderColor = theme.colors.border.primary;
-            }}
-            title="Change Theme"
-          >
-            <span>{themes[currentTheme]?.name || 'Dark'}</span>
-            <span style={{ 
-              fontSize: '10px',
-              opacity: 0.7,
-              marginLeft: theme.spacing.xs,
-            }}>▼</span>
-          </button>
+          <div style={{ position: 'relative' }}>
+            <button
+              onClick={() => setIsThemeDropdownOpen(!isThemeDropdownOpen)}
+              style={{
+                padding: `${theme.spacing.sm} ${theme.spacing.md}`,
+                backgroundColor: 'transparent',
+                color: theme.colors.text.primary,
+                border: `1px solid ${theme.colors.border.primary}`,
+                borderRadius: theme.borderRadius.md,
+                cursor: 'pointer',
+                fontSize: theme.fontSize.sm,
+                display: 'flex',
+                alignItems: 'center',
+                gap: theme.spacing.sm,
+                transition: `all ${theme.transitions.fast}`,
+                fontWeight: '500',
+                whiteSpace: 'nowrap',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = theme.colors.background.hover;
+                e.currentTarget.style.borderColor = theme.colors.border.active;
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'transparent';
+                e.currentTarget.style.borderColor = theme.colors.border.primary;
+              }}
+              title="Change Theme"
+            >
+              <span>{themes[currentTheme]?.name || 'Dark'}</span>
+              <span style={{ 
+                fontSize: '10px',
+                opacity: 0.7,
+                marginLeft: theme.spacing.xs,
+              }}>▼</span>
+            </button>
+
+            {isThemeDropdownOpen && (
+              <>
+                <div 
+                  style={{
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    zIndex: 999,
+                  }}
+                  onClick={() => setIsThemeDropdownOpen(false)}
+                />
+                <div style={{
+                  position: 'absolute',
+                  top: '100%',
+                  right: 0,
+                  marginTop: theme.spacing.xs,
+                  backgroundColor: theme.colors.background.secondary,
+                  border: `1px solid ${theme.colors.border.primary}`,
+                  borderRadius: theme.borderRadius.md,
+                  boxShadow: theme.shadows.lg,
+                  zIndex: 1000,
+                  minWidth: '150px',
+                }}>
+                  {Object.keys(themes).map((themeKey) => (
+                    <button
+                      key={themeKey}
+                      onClick={() => {
+                        switchTheme(themeKey);
+                        setIsThemeDropdownOpen(false);
+                      }}
+                      style={{
+                        width: '100%',
+                        padding: `${theme.spacing.sm} ${theme.spacing.md}`,
+                        backgroundColor: themeKey === currentTheme ? theme.colors.background.hover : 'transparent',
+                        color: theme.colors.text.primary,
+                        border: 'none',
+                        textAlign: 'left',
+                        cursor: 'pointer',
+                        fontSize: theme.fontSize.sm,
+                        transition: `all ${theme.transitions.fast}`,
+                        borderRadius: theme.borderRadius.sm,
+                      }}
+                      onMouseEnter={(e) => {
+                        if (themeKey !== currentTheme) {
+                          e.currentTarget.style.backgroundColor = theme.colors.background.hover;
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = themeKey === currentTheme ? theme.colors.background.hover : 'transparent';
+                      }}
+                    >
+                      {themes[themeKey].name}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
 
           <button
             onClick={() => setIsSettingsOpen(true)}

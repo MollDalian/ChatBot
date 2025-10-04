@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTrash } from '@fortawesome/free-solid-svg-icons';
-import { theme } from '../theme';
+import { useTheme } from '../ThemeContext';
 
 function ChatItem({ chat, isActive, onSelect, onDelete }) {
+  const { theme } = useTheme();
   const [isHovered, setIsHovered] = useState(false);
 
   return (

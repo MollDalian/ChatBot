@@ -86,7 +86,31 @@ The React frontend runs on `0.0.0.0:5000` with a Merlin AI-inspired design featu
 
 ## Recent Changes (2025-10-04)
 
-### Latest Updates - OpenAI Integration & Bug Fixes
+### Latest Portfolio Enhancements
+- **Multi-Theme System**:
+  - Implemented ThemeContext with three themes: Dark, Light, and Ocean
+  - Theme dropdown selector in header showing all available themes
+  - All components (App, ChatItem, Message, Settings) use ThemeContext for dynamic theming
+  - Theme persistence in localStorage
+  - Smooth transitions between themes
+- **Font Awesome Integration**:
+  - Integrated Font Awesome via CDN in public/index.html
+  - Replaced emoji trash icons with professional Font Awesome icons in ChatItem component
+  - Consistent icon styling across the application
+- **Docker Configuration**:
+  - Complete Docker setup with docker-compose.yml
+  - Separate Dockerfiles for backend (Python) and frontend (Node.js with nginx)
+  - Production-ready nginx configuration for static file serving
+  - Volume management for persistent data
+  - Network isolation with custom bridge network
+- **Comprehensive README**:
+  - Portfolio-ready documentation with live demo link
+  - Feature highlights and technology stack
+  - Setup instructions and deployment guide
+  - Docker deployment section
+  - Architecture overview and API documentation
+
+### Previous Updates - OpenAI Integration & Bug Fixes
 - **Dual AI Model System**: 
   - OpenAI (GPT-3.5/4) with user-supplied API keys
   - DialoGPT free fallback when no API key provided
