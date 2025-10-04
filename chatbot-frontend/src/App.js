@@ -3,6 +3,7 @@ import ChatList from './ChatList';
 import ChatWindow from './ChatWindow';
 import MessageInput from './MessageInput';
 import { theme } from './theme';
+import './App.css';
 
 function App() {
   const [messages, setMessages] = useState([]);
@@ -11,9 +12,23 @@ function App() {
   });
   const [allChats, setAllChats] = useState([]);
   const [isNewChat, setIsNewChat] = useState(false);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth > 768);
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const eventSourceRef = useRef(null);
   const inputRef = useRef(null);
+
+  useEffect(() => {
+    const handleResize = () => {
+      const mobile = window.innerWidth <= 768;
+      setIsMobile(mobile);
+      if (!mobile) {
+        setIsSidebarOpen(true);
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   useEffect(() => {
     if (currentChatId) {
@@ -128,6 +143,9 @@ function App() {
       const data = await res.json();
       setCurrentChatId(chatId);
       setMessages(data.messages || []);
+      if (isMobile) {
+        setIsSidebarOpen(false);
+      }
     } catch (err) {
       console.error('Failed to load chat:', err);
     }
@@ -137,6 +155,9 @@ function App() {
     setMessages([{ user: 'bot', message: 'Hello! How can I help you today?' }]);
     setCurrentChatId(null);
     setIsNewChat(true);
+    if (isMobile) {
+      setIsSidebarOpen(false);
+    }
   };
 
   return (
@@ -149,15 +170,39 @@ function App() {
       fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
       overflow: 'hidden',
     }}>
-      <div style={{
-        width: isSidebarOpen ? '280px' : '0',
-        flexShrink: 0,
-        display: 'flex',
-        flexDirection: 'column',
-        borderRight: `1px solid ${theme.colors.border.primary}`,
-        transition: `width ${theme.transitions.normal}`,
-        overflow: 'hidden',
-      }}>
+      {isMobile && isSidebarOpen && (
+        <div 
+          className="sidebar-overlay"
+          onClick={() => setIsSidebarOpen(false)}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            zIndex: 999,
+          }}
+        />
+      )}
+      
+      <div 
+        className={isMobile ? 'sidebar' : ''}
+        style={{
+          width: isSidebarOpen ? '280px' : '0',
+          flexShrink: 0,
+          display: 'flex',
+          flexDirection: 'column',
+          borderRight: `1px solid ${theme.colors.border.primary}`,
+          transition: `all ${theme.transitions.normal}`,
+          overflow: 'hidden',
+          position: isMobile ? 'fixed' : 'relative',
+          left: isMobile && !isSidebarOpen ? '-280px' : '0',
+          top: 0,
+          height: '100vh',
+          zIndex: isMobile ? 1000 : 'auto',
+          boxShadow: isMobile && isSidebarOpen ? '2px 0 8px rgba(0, 0, 0, 0.5)' : 'none',
+        }}>
         <div style={{
           padding: theme.spacing.lg,
           borderBottom: `1px solid ${theme.colors.border.primary}`,
