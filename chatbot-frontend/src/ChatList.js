@@ -1,8 +1,8 @@
 import React from "react";
 
-function ChatList({ chats, onSelectChat, onDeleteChat }) {
+function ChatList({ chats, onSelectChat, onDeleteChat, currentChatId }) {
   const handleDelete = (e, chatId) => {
-    e.stopPropagation(); // Prevent chat selection when deleting
+    e.stopPropagation();
     onDeleteChat(chatId);
   };
 
@@ -19,7 +19,11 @@ function ChatList({ chats, onSelectChat, onDeleteChat }) {
             cursor: "pointer",
             display: "flex",
             justifyContent: "space-between",
-            alignItems: "center"
+            alignItems: "center",
+            backgroundColor: chat.id === currentChatId ? "#e9ecef" : "white",
+            border: chat.id === currentChatId ? "1px solid #dee2e6" : "none",
+            borderRadius: "4px",
+            margin: "4px 0"
           }}
           onClick={() => onSelectChat(chat.id)}
         >

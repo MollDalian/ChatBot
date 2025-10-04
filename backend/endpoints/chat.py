@@ -45,7 +45,7 @@ if torch.cuda.is_available():
 @router.get("/chat")
 async def chat(prompt: str, chat_id: Optional[str] = None):
     if not chat_id:
-        chat_id = await create_chat(title=prompt[:20])
+        chat_id = await create_chat(title=prompt)
 
     # Save user message
     user_msg = ChatMessage(
@@ -170,8 +170,8 @@ async def delete_chat(chat_id: str):
         await database.execute(delete_messages)
 
         # Delete the chat
-        delete_chat = chats.delete().where(chats.c.id == chat_id)
-        result = await database.execute(delete_chat)
+        del_chat = chats.delete().where(chats.c.id == chat_id)
+        result = await database.execute(del_chat)
 
         if result:
             return {"message": "Chat deleted successfully"}

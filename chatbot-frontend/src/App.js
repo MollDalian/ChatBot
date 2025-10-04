@@ -6,13 +6,22 @@ import MessageInput from "./MessageInput";
 
 function App() {
   const [messages, setMessages] = useState([]);
-  const [currentChatId, setCurrentChatId] = useState(null);
+  const [currentChatId, setCurrentChatId] = useState(() => {
+    return localStorage.getItem('lastActiveChatId') || null;
+  });
   const [allChats, setAllChats] = useState([]);
   const [isNewChat, setIsNewChat] = useState(false);
   const eventSourceRef = useRef(null);
   const inputRef = useRef(null);
 
-  // Focus input after new chat starts
+  useEffect(() => {
+    if (currentChatId) {
+      localStorage.setItem('lastActiveChatId', currentChatId);
+    } else {
+      localStorage.removeItem('lastActiveChatId');
+    }
+  }, [currentChatId]);
+
   useEffect(() => {
     if (isNewChat) {
       inputRef.current?.focus();
@@ -20,11 +29,13 @@ function App() {
     }
   }, [isNewChat]);
 
-  // Load existing chats and show welcome message on mount
   useEffect(() => {
     const initializeApp = async () => {
       await fetchChats();
-      if (!currentChatId) {
+      const savedChatId = localStorage.getItem('lastActiveChatId');
+      if (savedChatId) {
+        loadChat(savedChatId);
+      } else {
         setMessages([{ user: "bot", message: "Hello! How can I help you today?" }]);
       }
     };
@@ -86,8 +97,8 @@ function App() {
           setCurrentChatId(msg.chat_id);
 
           setAllChats((prev) => {
-            if (!prev.some((c) => c.chat_id === msg.chat_id)) {
-              return [...prev, { chat_id: msg.chat_id, title: prompt.slice(0, 20) }];
+            if (!prev.some((c) => c.id === msg.chat_id)) {
+              return [...prev, { id: msg.chat_id, title: prompt.slice(0, 20) }];
             }
             return prev;
           });
@@ -138,6 +149,7 @@ function App() {
             chats={allChats}
             onSelectChat={loadChat}
             onDeleteChat={handleDeleteChat}
+            currentChatId={currentChatId}
           />
         </Col>
         <Col md={8}>
