@@ -1,48 +1,56 @@
-import React from "react";
+import React from 'react';
+import ChatItem from './components/ChatItem';
+import { theme } from './theme';
 
 function ChatList({ chats, onSelectChat, onDeleteChat, currentChatId }) {
-  const handleDelete = (e, chatId) => {
-    e.stopPropagation();
-    onDeleteChat(chatId);
-  };
-
   return (
-    <div>
-      {chats.length === 0 && <div>No chats yet</div>}
-      {chats.map((chat) => (
-        <div
-          key={chat.id}
-          className="chat-item"
-          style={{
-            padding: "8px",
-            borderBottom: "1px solid #ccc",
-            cursor: "pointer",
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            backgroundColor: chat.id === currentChatId ? "#e9ecef" : "white",
-            border: chat.id === currentChatId ? "1px solid #dee2e6" : "none",
-            borderRadius: "4px",
-            margin: "4px 0"
-          }}
-          onClick={() => onSelectChat(chat.id)}
-        >
-          <span>{chat.title}</span>
-          <button
-            onClick={(e) => handleDelete(e, chat.id)}
-            style={{
-              padding: "4px 8px",
-              backgroundColor: "#ff4444",
-              color: "white",
-              border: "none",
-              borderRadius: "4px",
-              cursor: "pointer"
-            }}
-          >
-            Delete
-          </button>
-        </div>
-      ))}
+    <div style={{
+      height: '100%',
+      display: 'flex',
+      flexDirection: 'column',
+      backgroundColor: theme.colors.background.sidebar,
+      overflowY: 'auto',
+    }}>
+      <div style={{
+        padding: theme.spacing.lg,
+        borderBottom: `1px solid ${theme.colors.border.primary}`,
+      }}>
+        <h3 style={{
+          margin: 0,
+          fontSize: theme.fontSize.lg,
+          fontWeight: '600',
+          color: theme.colors.text.primary,
+        }}>
+          Chat History
+        </h3>
+      </div>
+      
+      <div style={{
+        flex: 1,
+        overflowY: 'auto',
+        padding: `${theme.spacing.sm} 0`,
+      }}>
+        {chats.length === 0 ? (
+          <div style={{
+            padding: theme.spacing.xl,
+            textAlign: 'center',
+            color: theme.colors.text.tertiary,
+            fontSize: theme.fontSize.sm,
+          }}>
+            No chats yet
+          </div>
+        ) : (
+          chats.map((chat) => (
+            <ChatItem
+              key={chat.id}
+              chat={chat}
+              isActive={chat.id === currentChatId}
+              onSelect={() => onSelectChat(chat.id)}
+              onDelete={onDeleteChat}
+            />
+          ))
+        )}
+      </div>
     </div>
   );
 }
