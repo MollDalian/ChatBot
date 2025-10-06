@@ -77,4 +77,5 @@ yarn-error.log*
 .temp/
 
 *.replit
+replit.md
 
