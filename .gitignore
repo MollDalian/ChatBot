@@ -76,6 +76,6 @@ yarn-error.log*
 .cache/
 .temp/
 
-*.replit
+.replit
 replit.md
 
